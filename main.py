@@ -63,30 +63,30 @@ RS_DATA = 0x01
 
 ### ENUMS ###
 
-class Alignment():
-    left = LCD_ENTRYLEFT
-    right = LCD_ENTRYRIGHT
+# class Alignment():
+#     left = LCD_ENTRYLEFT
+#     right = LCD_ENTRYRIGHT
 
 
-class ShiftMode():
-    cursor = LCD_ENTRYSHIFTDECREMENT
-    display = LCD_ENTRYSHIFTINCREMENT
+# class ShiftMode():
+#     cursor = LCD_ENTRYSHIFTDECREMENT
+#     display = LCD_ENTRYSHIFTINCREMENT
 
 
-class CursorMode():
-    hide = LCD_CURSOROFF | LCD_BLINKOFF
-    line = LCD_CURSORON | LCD_BLINKOFF
-    blink = LCD_CURSOROFF | LCD_BLINKON
+# class CursorMode():
+#     hide = LCD_CURSOROFF | LCD_BLINKOFF
+#     line = LCD_CURSORON | LCD_BLINKOFF
+#     blink = LCD_CURSOROFF | LCD_BLINKON
 
 
 ### MAIN ###
 
-class PinConfig():
+# class PinConfig():
     
-    def __init__(self,rs, rw, e, d0, d1, d2, d3, d4, d5, d6, d7):
-        self.rs=rs
-        self.rw=rw
-        self.e=e
+#     def __init__(self,rs, rw, e, d0, d1, d2, d3, d4, d5, d6, d7):
+#         self.rs=rs
+#         self.rw=rw
+#         self.e=e
         
     
 
@@ -203,7 +203,7 @@ class CharLCD():
 
         # Configure display mode
         self._display_mode = LCD_DISPLAYON
-        self._cursor_mode = int(CursorMode.hide)
+        self._cursor_mode = LCD_CURSOROFF | LCD_BLINKOFF
         self.command(LCD_DISPLAYCONTROL | self._display_mode | self._cursor_mode)
         hwtimers.sleep(50)
 
@@ -211,8 +211,8 @@ class CharLCD():
         self.clear()
 
         # Configure entry mode
-        self._text_align_mode = int(Alignment.left)
-        self._display_shift_mode = int(ShiftMode.cursor)
+        self._text_align_mode = LCD_ENTRYLEFT
+        self._display_shift_mode = LCD_ENTRYSHIFTDECREMENT
         self._cursor_pos = (0, 0)
         self.command(LCD_ENTRYMODESET | self._text_align_mode | self._display_shift_mode)
         hwtimers.sleep(50)
@@ -248,8 +248,8 @@ class CharLCD():
 #             raise ValueError('Internal _text_align_mode has invalid value.')
 
     def _set_text_align_mode(self, value):
-        if not value in Alignment:
-            print ('ValueError(Cursor move mode must be of ``Alignment`` type.')
+#         if not value in Alignment:
+#             print ('ValueError(Cursor move mode must be of ``Alignment`` type.')
         self._text_align_mode = int(value)
         self.command(LCD_ENTRYMODESET | self._text_align_mode | self._display_shift_mode)
         hwtimers.sleep(50)
@@ -257,11 +257,11 @@ class CharLCD():
 #     text_align_mode = property(_get_text_align_mode, _set_text_align_mode,
 #             doc='The text alignment (``Alignment.left`` or ``Alignment.right``).')
 
-    def _get_write_shift_mode(self):
-        try:
-            return ShiftMode[self._display_shift_mode]
-        except ValueError:
-            print ('ValueError(Internal _display_shift_mode has invalid value.)')
+#     def _get_write_shift_mode(self):
+#         try:
+#             return ShiftMode[self._display_shift_mode]
+#         except ValueError:
+#             print ('ValueError(Internal _display_shift_mode has invalid value.)')
 
     def _set_write_shift_mode(self, value):
 #         if not value in ShiftMode:
@@ -287,15 +287,15 @@ class CharLCD():
 #     display_enabled = property(_get_display_enabled, _set_display_enabled,
 #             doc='Whether or not to display any characters.')
 
-    def _get_cursor_mode(self):
-        try:
-            return CursorMode[self._cursor_mode]
-        except ValueError as e:
-            print (e,'Internal _cursor_mode has invalid value.')
+#     def _get_cursor_mode(self):
+#         try:
+#             return CursorMode[self._cursor_mode]
+#         except ValueError as e:
+#             print (e,'Internal _cursor_mode has invalid value.')
 
     def _set_cursor_mode(self, value):
-        if not value in CursorMode:
-            print ('ValueError(Cursor mode must be of ``CursorMode`` type.)')
+#         if not value in CursorMode:
+#             print ('ValueError(Cursor mode must be of ``CursorMode`` type.)')
         self._cursor_mode = int(value)
         self.command(LCD_DISPLAYCONTROL | self._display_mode | self._cursor_mode)
         hwtimers.sleep(50)
@@ -321,7 +321,7 @@ class CharLCD():
 
         .. code::
 
-            >>> bstring = 'Temperature: 30ÃÂ°C'
+            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂ°C'
             >>> bstring
             'Temperature: 30\xc2\xb0C'
             >>> bstring.decode('utf-8')
@@ -344,7 +344,7 @@ class CharLCD():
                 else:
                     self.cursor_pos = (0, col)
             elif char == '\r':
-                if self.text_align_mode is Alignment.left:
+                if self.text_align_mode is LCD_ENTRYLEFT:
                     self.cursor_pos = (row, 0)
                 else:
                     self.cursor_pos = (row, self.lcd.cols - 1)
@@ -443,7 +443,7 @@ class CharLCD():
             unchanged = True
 
         # Update cursor position.
-        if self.text_align_mode is Alignment.left:
+        if self.text_align_mode is LCD_ENTRYLEFT:
             if col < self.lcd.cols - 1:
                 # No newline, update internal pointer
                 newpos = (row, col + 1)
