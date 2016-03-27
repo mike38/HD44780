@@ -5,6 +5,10 @@
 #
 ################################################################################
 import hwtimers
+import streams
+
+# open the default serial port
+streams.serial()
 
 ### BIT PATTERNS ###
 
@@ -133,7 +137,7 @@ class CharLCD():
 #         assert dotsize in [8, 10], 'The ``dotsize`` argument should be either 8 or 10.'
 
         # Set attributes
-
+        print('start init')
         if len(pins_data) == 4:  # 4 bit mode
             self.data_bus_mode = LCD_4BITMODE
             block1 = [None] * 4
@@ -146,16 +150,19 @@ class CharLCD():
 #         self.pins = PinConfig(rs=pin_rs, rw=pin_rw, e=pin_e,
 #                               d0=block1[0], d1=block1[1], d2=block1[2], d3=block1[3],
 #                               d4=block2[0], d5=block2[1], d6=block2[2], d7=block2[3])
+        self.pin_e=pin_e
+        self.pin_rw=pin_rw
+        self.pin_rs=pin_rs
         self.pins=(pin_rs,pin_rw,pin_e,block1[0], block1[1], block1[2], block1[3],
                              block2[0], block2[1], block2[2], block2[3])
         self.lcd = (rows, cols, dotsize)
-
+        print('Setup GPIO')
         # Setup GPIO
 #         GPIO.setmode(self.numbering_mode)
         for pin in self.pins:
             if pin!=None:
                 pinMode (pin,OUTPUT)
-
+        print('Setup initial display configuration')
         # Setup initial display configuration
         displayfunction = self.data_bus_mode | LCD_5x8DOTS
         if rows == 1:
@@ -169,43 +176,46 @@ class CharLCD():
 
         # Create content cache
         self._content = [[0x20] * cols for _ in range(rows)]
-
+        print('Initialization')
         # Initialization
-        sleep(50)
-        digitalWrite(self.pins.rs, 0)
-        digitalWrite(self.pins.e, 0)
-        if self.pins.rw is not None:
-            digitalWrite(self.pins.rw, 0)
-
+        hwtimers.sleep_micros(50*1000)
+        print('sleeped',pin_rs)
+        digitalWrite(pin_rs, LOW)
+        print(pin_rs,' rs LOW')
+        digitalWrite(pin_e, 0)
+        print(pin_e,' e LOW')
+        if pin_rw is not None:
+            digitalWrite(pin_rw, 0)
+        print('Choose 4 or 8 bit')
         # Choose 4 or 8 bit mode
         if self.data_bus_mode == LCD_4BITMODE:
             # Hitachi manual page 46
             self._write4bits(0x03)
-            sleep(4.5)
+            hwtimers.sleep_micros(4500)
             self._write4bits(0x03)
-            sleep(4.5)
+            hwtimers.sleep_micros(4500)
             self._write4bits(0x03)
-            hwtimers.sleep(100)
+            hwtimers.sleep_micros(100)
             self._write4bits(0x02)
         elif self.data_bus_mode == LCD_8BITMODE:
             # Hitachi manual page 45
             self._write8bits(0x30)
-            sleep(4.5)
+            hwtimers.sleep_micros(4500)
             self._write8bits(0x30)
-            hwtimers.sleep(100)
+            hwtimers.sleep_micros(100)
             self._write8bits(0x30)
 #         else:
 #             raise ValueError('Invalid data bus mode: {}'.format(self.data_bus_mode))
-
+        print('Write configuration to display')
         # Write configuration to display
         self.command(LCD_FUNCTIONSET | displayfunction)
-        hwtimers.sleep(50)
-
+        hwtimers.sleep_micros(50)
+        print('configure')
         # Configure display mode
         self._display_mode = LCD_DISPLAYON
         self._cursor_mode = LCD_CURSOROFF | LCD_BLINKOFF
         self.command(LCD_DISPLAYCONTROL | self._display_mode | self._cursor_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
         # Clear display
         self.clear()
@@ -215,7 +225,8 @@ class CharLCD():
         self._display_shift_mode = LCD_ENTRYSHIFTDECREMENT
         self._cursor_pos = (0, 0)
         self.command(LCD_ENTRYMODESET | self._text_align_mode | self._display_shift_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
+        print('init done')
 
 #     def close(self, clear=False):
 #         if clear:
@@ -321,7 +332,7 @@ class CharLCD():
 
         .. code::
 
-            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
+            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
             >>> bstring
             'Temperature: 30\xc2\xb0C'
             >>> bstring.decode('utf-8')
@@ -353,14 +364,14 @@ class CharLCD():
         """Overwrite display with blank characters and reset cursor position."""
         self.command(LCD_CLEARDISPLAY)
         self._cursor_pos = (0, 0)
-        self._content = [[0x20] * self.lcd.cols for _ in range(self.lcd.rows)]
-        sleep(2)
+        self._content = [[0x20] * self.lcd[1] for _ in range(self.lcd[0])]
+        hwtimers.sleep_micros(2000)
 
     def home(self):
         """Set cursor to initial position and reset any shifting."""
         self.command(LCD_RETURNHOME)
         self._cursor_pos = (0, 0)
-        sleep(2)
+        hwtimers.sleep_micros(2000)
 
     def shift_display(self, amount):
         """Shift the display. Use negative amounts to shift left and positive
@@ -479,11 +490,11 @@ class CharLCD():
         selection. The rs_mode is either ``RS_DATA`` or ``RS_INSTRUCTION``."""
 
         # Choose instruction or data mode
-        digitalWrite(self.pins.rs, mode)
+        digitalWrite(self.pin_rs, mode)
 
         # If the RW pin is used, set it to low in order to write.
-        if self.pins.rw is not None:
-            digitalWrite(self.pins.rw, 0)
+        if self.pin_rw is not None:
+            digitalWrite(self.pin_rw, 0)
 
         # Write data out in chunks of 4 or 8 bit
         if self.data_bus_mode == LCD_8BITMODE:
@@ -508,14 +519,18 @@ class CharLCD():
 
     def _pulse_enable(self):
         """Pulse the `enable` flag to process data."""
-        digitalWrite(self.pins.e, 0)
-        hwtimers.sleep(1)
-        digitalWrite(self.pins.e, 1)
-        hwtimers.sleep(1)
-        digitalWrite(self.pins.e, 0)
-        hwtimers.sleep(100)  # commands need > 37us to settle
+        digitalWrite(self.pin_e, 0)
+        hwtimers.sleep_micros(1)
+        digitalWrite(self.pin_e, 1)
+        hwtimers.sleep_micros(1)
+        digitalWrite(self.pin_e, 0)
+        hwtimers.sleep_micros(100)  # commands need > 37us to settle
         
         
+        
+print ('starting...')
 lcd = CharLCD(pin_rs=8, pin_rw=None, pin_e=9, pins_data=[4,5,6,7],
                        cols=16, rows=2)
+
+lcd._set_display_enable(True)
 lcd.write_string('Hello world!')
