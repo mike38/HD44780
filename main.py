@@ -321,7 +321,7 @@ class CharLCD():
 
         .. code::
 
-            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂ°C'
+            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
             >>> bstring
             'Temperature: 30\xc2\xb0C'
             >>> bstring.decode('utf-8')
@@ -514,3 +514,8 @@ class CharLCD():
         hwtimers.sleep(1)
         digitalWrite(self.pins.e, 0)
         hwtimers.sleep(100)  # commands need > 37us to settle
+        
+        
+lcd = CharLCD(pin_rs=8, pin_rw=None, pin_e=9, pins_data=[4,5,6,7],
+                       cols=16, rows=2)
+lcd.write_string('Hello world!')
