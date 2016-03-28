@@ -241,13 +241,13 @@ class CharLCD():
     def _set_cursor_pos(self, value):
 #         if not hasattr(value, '__getitem__') or len(value) != 2:
 #             raise ValueError('Cursor position should be determined by a 2-tuple.')
-        if value[0] not in range(self.lcd.rows) or value[1] not in range(self.lcd.cols):
+        if value[0] not in range(self.lcd[0]) or value[1] not in range(self.lcd[1]):
             msg = 'Cursor position {pos!r} invalid on a {lcd.rows}x{lcd.cols} LCD.'
 #             raise ValueError(msg.format(pos=value, lcd=self.lcd))
-        row_offsets = [0x00, 0x40, self.lcd.cols, 0x40 + self.lcd.cols]
+        row_offsets = [0x00, 0x40, self.lcd[1], 0x40 + self.lcd[1]]
         self._cursor_pos = value
         self.command(LCD_SETDDRAMADDR | row_offsets[value[0]] + value[1])
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
 #     cursor_pos = property(_get_cursor_pos, _set_cursor_pos,
 #             doc='The cursor position as a 2-tuple (row, col).')
@@ -263,7 +263,7 @@ class CharLCD():
 #             print ('ValueError(Cursor move mode must be of ``Alignment`` type.')
         self._text_align_mode = int(value)
         self.command(LCD_ENTRYMODESET | self._text_align_mode | self._display_shift_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
 #     text_align_mode = property(_get_text_align_mode, _set_text_align_mode,
 #             doc='The text alignment (``Alignment.left`` or ``Alignment.right``).')
@@ -279,7 +279,7 @@ class CharLCD():
 #             raise ValueError('Write shift mode must be of ``ShiftMode`` type.')
         self._display_shift_mode = int(value)
         self.command(LCD_ENTRYMODESET | self._text_align_mode | self._display_shift_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
 #     write_shift_mode = property(_get_write_shift_mode, _set_write_shift_mode,
 #             doc='The shift mode when writing (``ShiftMode.cursor`` or ``ShiftMode.display``).')
@@ -293,7 +293,7 @@ class CharLCD():
         else:
             self._display_mode = LCD_DISPLAYOFF
         self.command(LCD_DISPLAYCONTROL | self._display_mode | self._cursor_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
 #     display_enabled = property(_get_display_enabled, _set_display_enabled,
 #             doc='Whether or not to display any characters.')
@@ -309,7 +309,7 @@ class CharLCD():
 #             print ('ValueError(Cursor mode must be of ``CursorMode`` type.)')
         self._cursor_mode = int(value)
         self.command(LCD_DISPLAYCONTROL | self._display_mode | self._cursor_mode)
-        hwtimers.sleep(50)
+        hwtimers.sleep_micros(50)
 
 #     cursor_mode = property(_get_cursor_mode, _set_cursor_mode,
 #             doc='How the cursor should behave (``CursorMode.hide``, ' +
@@ -332,7 +332,7 @@ class CharLCD():
 
         .. code::
 
-            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
+            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
             >>> bstring
             'Temperature: 30\xc2\xb0C'
             >>> bstring.decode('utf-8')
@@ -350,7 +350,7 @@ class CharLCD():
             # Handle newlines and carriage returns
             row, col = self.cursor_pos
             if char == '\n':
-                if row < self.lcd.rows - 1:
+                if row < self.lcd[0] - 1:
                     self.cursor_pos = (row + 1, col)
                 else:
                     self.cursor_pos = (0, col)
@@ -358,7 +358,7 @@ class CharLCD():
                 if self.text_align_mode is LCD_ENTRYLEFT:
                     self.cursor_pos = (row, 0)
                 else:
-                    self.cursor_pos = (row, self.lcd.cols - 1)
+                    self.cursor_pos = (row, self.lcd[1] - 1)
 
     def clear(self):
         """Overwrite display with blank characters and reset cursor position."""
@@ -384,7 +384,7 @@ class CharLCD():
             direction = LCD_MOVELEFT
         for i in range(abs(amount)):
             self.command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | direction)
-            hwtimers.sleep(50)
+            hwtimers.sleep_micros(50)
 
     def create_char(self, location, bitmap):
         """Create a new character.
@@ -455,7 +455,7 @@ class CharLCD():
 
         # Update cursor position.
         if self.text_align_mode is LCD_ENTRYLEFT:
-            if col < self.lcd.cols - 1:
+            if col < self.lcd[1] - 1:
                 # No newline, update internal pointer
                 newpos = (row, col + 1)
                 if unchanged:
@@ -464,7 +464,7 @@ class CharLCD():
                     self._cursor_pos = newpos
             else:
                 # Newline, reset pointer
-                if row < self.lcd.rows - 1:
+                if row < self.lcd[0] - 1:
                     self.cursor_pos = (row + 1, 0)
                 else:
                     self.cursor_pos = (0, 0)
@@ -532,5 +532,5 @@ print ('starting...')
 lcd = CharLCD(pin_rs=8, pin_rw=None, pin_e=9, pins_data=[4,5,6,7],
                        cols=16, rows=2)
 
-lcd._set_display_enable(True)
+#lcd._set_display_enable(True)
 lcd.write_string('Hello world!')
