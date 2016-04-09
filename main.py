@@ -252,9 +252,9 @@ class CharLCD():
 #     cursor_pos = property(_get_cursor_pos, _set_cursor_pos,
 #             doc='The cursor position as a 2-tuple (row, col).')
 
-#     def _get_text_align_mode(self):
+    def _get_text_align_mode(self):
 #         try:
-#             return Alignment[self._text_align_mode]
+          return self._text_align_mode
 #         except ValueError:
 #             raise ValueError('Internal _text_align_mode has invalid value.')
 
@@ -332,7 +332,7 @@ class CharLCD():
 
         .. code::
 
-            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
+            >>> bstring = 'Temperature: 30ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°C'
             >>> bstring
             'Temperature: 30\xc2\xb0C'
             >>> bstring.decode('utf-8')
@@ -344,21 +344,24 @@ class CharLCD():
         """
         for char in value:
             # Write regular chars
+            print(char)
             if char not in '\n\r':
                 self.write(ord(char))
                 continue
             # Handle newlines and carriage returns
-            row, col = self.cursor_pos
+            row, col = self._get_cursor_pos()
+            print ('write_string',row,col)
             if char == '\n':
                 if row < self.lcd[0] - 1:
                     self.cursor_pos = (row + 1, col)
                 else:
                     self.cursor_pos = (0, col)
             elif char == '\r':
-                if self.text_align_mode is LCD_ENTRYLEFT:
+                if self._get_text_align_mode() is LCD_ENTRYLEFT:
                     self.cursor_pos = (row, 0)
                 else:
                     self.cursor_pos = (row, self.lcd[1] - 1)
+            self._set_cursor_pos(self.cursor_pos)
 
     def clear(self):
         """Overwrite display with blank characters and reset cursor position."""
@@ -444,30 +447,36 @@ class CharLCD():
 
         # Get current position
         row, col = self._cursor_pos
+        print('write',row,col,value)
 
         # Write byte if changed
         if self._content[row][col] != value:
+            print('value',value,self._content[row][col])
             self._send(value, RS_DATA)
             self._content[row][col] = value  # Update content cache
             unchanged = False
         else:
             unchanged = True
-
+        print('write byte',unchanged)
         # Update cursor position.
-        if self.text_align_mode is LCD_ENTRYLEFT:
+        
+        if self._get_text_align_mode() is LCD_ENTRYLEFT:
+            print ('LCDENTRYLEFT')
             if col < self.lcd[1] - 1:
                 # No newline, update internal pointer
                 newpos = (row, col + 1)
                 if unchanged:
                     self.cursor_pos = newpos
+                    self._set_cursor_pos(newpos)
+                    
                 else:
                     self._cursor_pos = newpos
             else:
                 # Newline, reset pointer
                 if row < self.lcd[0] - 1:
-                    self.cursor_pos = (row + 1, 0)
+                    self._cursor_pos = (row + 1, 0)
                 else:
-                    self.cursor_pos = (0, 0)
+                    self._cursor_pos = (0, 0)
         else:
             if col > 0:
                 # No newline, update internal pointer
@@ -478,10 +487,11 @@ class CharLCD():
                     self._cursor_pos = newpos
             else:
                 # Newline, reset pointer
-                if row < self.lcd.rows - 1:
-                    self.cursor_pos = (row + 1, self.lcd.cols - 1)
+                if row < self.lcd[0] - 1:
+                    self.cursor_pos = (row + 1, self.lcd[1] - 1)
                 else:
-                    self.cursor_pos = (0, self.lcd.cols - 1)
+                    self.cursor_pos = (0, self.lcd[1] - 1)
+        print('fin write')
 
     # Low level commands
 
@@ -534,4 +544,4 @@ lcd = CharLCD(pin_rs=8, pin_rw=None, pin_e=9, pins_data=[4,5,6,7],
 
 #lcd._set_display_enable(True)
 lcd.write_string('Hello world!')
-lcd.write_string('What if a long sentence, very very long')
+lcd.write_string('What a very very long sentence')
